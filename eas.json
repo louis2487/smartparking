@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 16.19.3",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.smartgauge.co.kr"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.smartgauge.co.kr"
+      },
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

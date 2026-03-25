@@ -1,112 +1,137 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+import { Button } from '@/components/ui/button';
+import { ParkingLocation } from '@/lib/api';
+import { useParking } from '@/parking-provider';
 
-export default function TabTwoScreen() {
+function formatWhen(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
+
+function Item({ item }: { item: ParkingLocation }) {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
+    <ThemedView style={styles.item}>
+      <View style={styles.itemTop}>
+        <ThemedText type="subtitle">
+          {item.floor ? `${item.floor} ` : ''}
+          {item.zone}
+          {item.spot ? `-${item.spot}` : ''}
         </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+        <ThemedText style={styles.time}>{formatWhen(item.parked_at)}</ThemedText>
+      </View>
+      {item.note ? <ThemedText style={styles.note}>{item.note}</ThemedText> : null}
+      {item.is_active ? <ThemedText style={styles.active}>현재 위치</ThemedText> : null}
+    </ThemedView>
+  );
+}
+
+export default function HistoryScreen() {
+  const { history, refreshing, error, refreshHistory } = useParking();
+
+  return (
+    <ThemedView style={styles.container}>
+      <View style={styles.header}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <ThemedText type="title">기록</ThemedText>
+          <ThemedText style={{ opacity: 0.8 }}>저장할 때마다 히스토리가 쌓입니다.</ThemedText>
+        </View>
+        <Button title="새로고침" variant="secondary" onPress={() => refreshHistory()} loading={refreshing} style={{ width: 110 }} />
+      </View>
+
+      {error ? (
+        <ThemedView style={styles.errorBox}>
+          <ThemedText style={styles.errorText}>서버 연결이 안 될 수 있어요.</ThemedText>
+          <ThemedText style={styles.errorTextSmall}>{error}</ThemedText>
+        </ThemedView>
+      ) : null}
+
+      <FlatList
+        data={history}
+        keyExtractor={(x) => String(x.id)}
+        renderItem={({ item }) => <Item item={item} />}
+        contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => refreshHistory()} />}
+        ListEmptyComponent={
+          <ThemedView style={styles.empty}>
+            <ThemedText type="subtitle">아직 기록이 없어요.</ThemedText>
+            <ThemedText style={{ opacity: 0.8 }}>홈에서 위치를 저장하면 여기에서 확인할 수 있어요.</ThemedText>
+          </ThemedView>
+        }
+      />
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    padding: 18,
+    gap: 12,
   },
-  titleContainer: {
+  header: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  list: {
+    gap: 10,
+    paddingBottom: 12,
+  },
+  item: {
+    borderRadius: 18,
+    padding: 14,
     gap: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,120,120,0.35)',
+  },
+  itemTop: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  time: {
+    opacity: 0.8,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  note: {
+    opacity: 0.9,
+  },
+  active: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(10,126,164,0.14)',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  empty: {
+    borderRadius: 18,
+    padding: 14,
+    gap: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,120,120,0.35)',
+  },
+  errorBox: {
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(210,60,60,0.55)',
+    backgroundColor: 'rgba(210,60,60,0.08)',
+    gap: 4,
+  },
+  errorText: {
+    fontWeight: '700',
+  },
+  errorTextSmall: {
+    opacity: 0.8,
+    fontSize: 12,
   },
 });

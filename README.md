@@ -1,50 +1,36 @@
-# Welcome to your Expo app 👋
+# SmartParking (내 차 위치 저장)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+주차장에서 **내 차의 위치(구역/번호/메모)**를 저장하고, 홈에서 바로 확인하며, 저장 기록(히스토리)을 볼 수 있는 Expo 앱입니다.
 
-## Get started
+## 실행 방법
 
-1. Install dependencies
+### 1) 백엔드(myapi) 실행
 
-   ```bash
-   npm install
-   ```
+`myapi`는 FastAPI 기반이며 아래 API를 제공합니다.
 
-2. Start the app
+- `GET /parking/location?device_id=...`
+- `POST /parking/location`
+- `GET /parking/location/history?device_id=...`
+- `DELETE /parking/location?device_id=...`
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+일반적인 실행 예시:
 
 ```bash
-npm run reset-project
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2) 프론트(smartparking) 실행
 
-## Learn more
+```bash
+npm install
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## API 주소 설정(EXPO_PUBLIC_API_BASE_URL)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+기본값은 `http://localhost:8000` 입니다.
 
-## Join the community
+- **Android 에뮬레이터**: 앱에서 `localhost`를 자동으로 `10.0.2.2`로 치환합니다.
+- **실제 휴대폰**: PC의 LAN IP로 지정해야 합니다. (예: `http://192.168.0.10:8000`)
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+설정은 `.env.example`를 참고해 `.env`를 만들면 됩니다.

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "smartparking",
+    "name": "스마트파킹",
     "slug": "smartparking",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.smartgauge.smartparking",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +23,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.smartgauge.smartparking"
     },
     "web": {
       "output": "static",
@@ -27,6 +32,7 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/withDisableOnSaveInstanceState",
       [
         "expo-splash-screen",
         {
@@ -43,6 +49,18 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "forceUpdate": {
+        "minVersion": "1.0.0",
+        "latestVersion": "1.0.0",
+        "androidStoreUrl": "https://play.google.com/store/apps/details?id=com.smartgauge.smartparking",
+        "message": "안정적인 이용을 위해 최신 버전으로 업데이트 후 이용해 주세요."
+      },
+      "eas": {
+        "projectId": "8a3f4ffd-3ef2-45e7-9d8f-593bc5aafd4a"
+      }
     }
   }
 }
