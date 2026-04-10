@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -12,6 +13,7 @@ const AUTH_PASS_KEY = 'smartparking:auth:password';
 
 export default function JhrRoleScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [username, setUsername] = useState<string | null>(null);
   const [password, setPassword] = useState<string | null>(null);
   const [role, setRole] = useState<JhrRole | null>(null);
@@ -72,7 +74,7 @@ export default function JhrRoleScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={[styles.container, { paddingBottom: 18 + insets.bottom }]}>
       <ThemedText type="title">역할 설정</ThemedText>
       <ThemedText style={styles.subtitle}>수강생/크리에이터 역할을 선택하면 서버에 즉시 저장됩니다.</ThemedText>
       <ThemedText style={styles.currentRole}>현재 역할: {loading ? '불러오는 중...' : roleLabel}</ThemedText>

@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -29,6 +30,7 @@ function formatDate(raw?: string | null) {
 
 export default function JhrClassStudentsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ class_id?: string; title?: string }>();
   const classId = Number(params.class_id);
   const classTitle = useMemo(() => (params.title ? String(params.title) : '강의별 수강생 목록'), [params.title]);
@@ -69,7 +71,7 @@ export default function JhrClassStudentsScreen() {
 
   return (
     <ThemedView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 + insets.bottom }]}>
         <ThemedText type="title">{classTitle}</ThemedText>
         <ThemedText style={styles.sub}>총 {items.length}명</ThemedText>
 

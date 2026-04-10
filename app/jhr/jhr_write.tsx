@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -37,6 +38,7 @@ const formatPriceInput = (raw: string) => {
 
 export default function JhrWriteScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id?: string }>();
   const editId = Number(params.id);
   const isEditMode = Number.isFinite(editId) && editId > 0;
@@ -154,7 +156,7 @@ export default function JhrWriteScreen() {
   return (
     <ThemedView style={styles.screen}>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 + insets.bottom }]}>
           <ThemedText type="title">{isEditMode ? '강의 수정' : '강의 작성'}</ThemedText>
 
           {loading ? <ThemedText>불러오는 중...</ThemedText> : null}

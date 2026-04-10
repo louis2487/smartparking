@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -51,6 +52,7 @@ function formatEnrollStatus(status: JhrEnrollStatus) {
 
 export default function JhrIdPostCard({ classId }: { classId: number }) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [username, setUsername] = useState<string | null>(null);
   const [password, setPassword] = useState<string | null>(null);
   const [role, setRole] = useState<JhrRole>('STUDENT');
@@ -197,7 +199,7 @@ export default function JhrIdPostCard({ classId }: { classId: number }) {
 
   return (
     <ThemedView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 + insets.bottom }]}>
         <ThemedText type="title" style={styles.titleText}>
           {item.title}
         </ThemedText>
