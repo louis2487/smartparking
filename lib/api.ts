@@ -130,7 +130,8 @@ export type ParkingUser = {
   signup_date: string;
   floor?: string | null;
   pillar_number?: string | null;
-  grade?: 'normal' | 'owner';
+  grade?: 'normal' | 'owner' | 'admin';
+  role?: 'STUDENT' | 'CREATOR';
 };
 
 export async function login(username: string, password: string) {
@@ -154,6 +155,20 @@ export async function getMe(username: string, password: string) {
   });
 }
 
+export async function checkParkingUserForPasswordReset(username: string) {
+  return apiFetch<{ exists: boolean }>('/parking/auth/reset-password/check', {
+    method: 'POST',
+    body: JSON.stringify({ username }),
+  });
+}
+
+export async function resetParkingPassword(username: string, newPassword: string) {
+  return apiFetch<{ status: 'ok' }>('/parking/auth/reset-password', {
+    method: 'PUT',
+    body: JSON.stringify({ username, new_password: newPassword }),
+  });
+}
+
 export async function setUserFloor(floor: 'B2' | 'B3' | 'B4' | 'B5', username: string, password: string) {
   return apiFetch<ParkingUser>('/parking/auth/me/floor', {
     method: 'PUT',
@@ -166,6 +181,173 @@ export async function setUserPillarNumber(pillar_number: string | null, username
     method: 'PUT',
     body: JSON.stringify({ pillar_number, username, password }),
   });
+}
+
+// ---------------------------
+// JHR Role API
+// ---------------------------
+
+export type JhrRole = 'STUDENT' | 'CREATOR';
+
+export type JhrRoleOut = {
+  username: string;
+  role: JhrRole;
+};
+
+export async function getJhrRole(username: string, password: string) {
+  return apiFetch<JhrRoleOut>('/jhr/role', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  });
+}
+
+export async function setJhrRole(username: string, password: string, role: JhrRole) {
+  return apiFetch<JhrRoleOut>('/jhr/role', {
+    method: 'PUT',
+    body: JSON.stringify({ username, password, role }),
+  });
+}
+
+export type JhrClassStatus = 'DRAFT' | 'OPEN' | 'CLOSED';
+export type JhrEnrollStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+
+export type JhrClass = {
+  id: number;
+  title: string;
+  description: string | null;
+  price: string;
+  capacity: number;
+  current_count: number;
+  start_date: string;
+  end_date: string;
+  status: JhrClassStatus;
+  creator_user_id: number;
+  created_at: string;
+  updated_at: string;
+  is_enrolled: boolean;
+  my_enrollment_status: JhrEnrollStatus | null;
+  my_enrollment_id: number | null;
+};
+
+export type JhrClassListOut = {
+  items: JhrClass[];
+  page: number;
+  limit: number;
+  total_count: number;
+  total_pages: number;
+};
+
+export type JhrEnrollment = {
+  id: number;
+  user_id: number;
+  username?: string | null;
+  class_id: number;
+  status: JhrEnrollStatus;
+  applied_at: string;
+  confirmed_at: string | null;
+  canceled_at: string | null;
+  class_title: string | null;
+};
+
+export async function getJhrClasses(
+  username: string,
+  password: string,
+  status?: JhrClassStatus,
+  page = 1,
+  limit = 3,
+) {
+  const qs = new URLSearchParams({ username, password });
+  if (status) qs.set('status', status);
+  qs.set('page', String(page));
+  qs.set('limit', String(limit));
+  return apiFetch<JhrClassListOut>(`/jhr/classes?${qs.toString()}`);
+}
+
+export async function getJhrClassDetail(classId: number, username: string, password: string) {
+  const qs = new URLSearchParams({ username, password });
+  return apiFetch<JhrClass>(`/jhr/classes/${classId}?${qs.toString()}`);
+}
+
+export async function createJhrClass(
+  username: string,
+  password: string,
+  payload: {
+    title: string;
+    description: string;
+    price: number;
+    capacity: number;
+    start_date: string;
+    end_date: string;
+    status: JhrClassStatus;
+  },
+) {
+  return apiFetch<JhrClass>('/jhr/classes', {
+    method: 'POST',
+    body: JSON.stringify({ username, password, ...payload }),
+  });
+}
+
+export async function updateJhrClass(
+  classId: number,
+  username: string,
+  password: string,
+  payload: Partial<{
+    title: string;
+    description: string;
+    price: number;
+    capacity: number;
+    start_date: string;
+    end_date: string;
+    status: JhrClassStatus;
+  }>,
+) {
+  return apiFetch<JhrClass>(`/jhr/classes/${classId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ username, password, ...payload }),
+  });
+}
+
+export async function updateJhrClassStatus(
+  classId: number,
+  username: string,
+  password: string,
+  status: 'OPEN' | 'CLOSED',
+) {
+  return apiFetch<JhrClass>('/jhr/class-status/change', {
+    method: 'PUT',
+    body: JSON.stringify({ class_id: classId, username, password, status }),
+  });
+}
+
+export async function createJhrEnrollment(username: string, password: string, classId: number) {
+  return apiFetch<JhrEnrollment>('/jhr/enrollments', {
+    method: 'POST',
+    body: JSON.stringify({ username, password, class_id: classId }),
+  });
+}
+
+export async function confirmJhrEnrollment(username: string, password: string, enrollmentId: number) {
+  return apiFetch<JhrEnrollment>('/jhr/enrollments/confirm', {
+    method: 'PUT',
+    body: JSON.stringify({ username, password, enrollment_id: enrollmentId }),
+  });
+}
+
+export async function cancelJhrEnrollment(username: string, password: string, enrollmentId: number) {
+  return apiFetch<JhrEnrollment>('/jhr/enrollments/cancel', {
+    method: 'PUT',
+    body: JSON.stringify({ username, password, enrollment_id: enrollmentId }),
+  });
+}
+
+export async function getMyJhrEnrollments(username: string, password: string) {
+  const qs = new URLSearchParams({ username, password });
+  return apiFetch<JhrEnrollment[]>(`/jhr/enrollments/me?${qs.toString()}`);
+}
+
+export async function getJhrClassStudents(classId: number, username: string, password: string) {
+  const qs = new URLSearchParams({ username, password });
+  return apiFetch<JhrEnrollment[]>(`/jhr/classes/${classId}/students?${qs.toString()}`);
 }
 
 export type ParkingCountRow = {
@@ -259,5 +441,146 @@ export async function saveParkingLocation(input: ParkingLocationSaveInput) {
 export async function clearParkingLocation(deviceId: string) {
   const qs = new URLSearchParams({ device_id: deviceId });
   return apiFetch<{ status: 'ok' }>(`/parking/location?${qs.toString()}`, { method: 'DELETE' });
+}
+
+// ---------------------------
+// Parking Posts (Notice)
+// ---------------------------
+
+export const PARKING_NOTICE_POST_TYPE = 11;
+
+export type ParkingPost = {
+  id: number;
+  title: string;
+  content: string;
+  created_at: string;
+  image_url?: string | null;
+  status?: 'published' | 'closed';
+  author?: {
+    id: number;
+    username: string;
+  };
+  post_type?: number;
+};
+
+export type ParkingPostsOut = {
+  items: ParkingPost[];
+  next_cursor: string | null;
+};
+
+export async function getParkingPosts(opts?: { status?: 'published' | 'closed'; limit?: number }) {
+  const qs = new URLSearchParams();
+  if (opts?.status) qs.set('status', opts.status);
+  if (typeof opts?.limit === 'number') qs.set('limit', String(opts.limit));
+  const query = qs.toString();
+  const path = `/parking/posts/type/${PARKING_NOTICE_POST_TYPE}${query ? `?${query}` : ''}`;
+  return apiFetch<ParkingPostsOut>(path);
+}
+
+export async function getParkingPost(postId: number) {
+  return apiFetch<ParkingPost>(`/parking/posts/${postId}`);
+}
+
+export async function updateParkingPost(
+  postId: number,
+  payload: { title?: string; content?: string; status?: 'published' | 'closed'; image_url?: string | null },
+) {
+  return apiFetch<ParkingPost>(`/parking/posts/${postId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteParkingPost(postId: number) {
+  return apiFetch<{ ok: boolean; message?: string }>(`/parking/posts/${postId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function createParkingPost(
+  username: string,
+  payload: { title: string; content: string; status?: 'published' | 'closed'; image_url?: string | null },
+) {
+  const primaryUsername = (username || '').trim() || '관리자';
+  const fallbackUsername = '관리자';
+  const parkingPath = `/parking/posts/${encodeURIComponent(primaryUsername)}/type/${PARKING_NOTICE_POST_TYPE}`;
+  try {
+    return await apiFetch<ParkingPost>(parkingPath, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/invalid username/i.test(msg) && primaryUsername !== fallbackUsername) {
+      return apiFetch<ParkingPost>(`/parking/posts/${encodeURIComponent(fallbackUsername)}/type/${PARKING_NOTICE_POST_TYPE}`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    }
+    // 서버에 /parking/posts 라우트가 아직 반영되지 않은 구버전 대비 폴백
+    if (msg.includes('404') || /not found/i.test(msg)) {
+      return apiFetch<ParkingPost>(`/community/posts/${encodeURIComponent(primaryUsername)}/type/${PARKING_NOTICE_POST_TYPE}`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    }
+    throw e;
+  }
+}
+
+export type ParkingPostComment = {
+  id: number;
+  post_id: number;
+  user_id: number;
+  username: string;
+  content: string;
+  created_at: string;
+  parent_id?: number | null;
+  is_deleted?: boolean;
+};
+
+export type ParkingPostCommentsOut = {
+  items: ParkingPostComment[];
+  next_cursor: string | null;
+};
+
+export async function getParkingPostComments(postId: number, cursor?: string, limit = 20) {
+  const qs = new URLSearchParams();
+  if (cursor) qs.set('cursor', cursor);
+  qs.set('limit', String(limit));
+  return apiFetch<ParkingPostCommentsOut>(`/parking/posts/${postId}/comments?${qs.toString()}`);
+}
+
+export async function createParkingPostComment(postId: number, username: string, content: string, parent_id?: number | null) {
+  const primaryUsername = (username || '').trim() || '관리자';
+  const fallbackUsername = '관리자';
+  try {
+    return await apiFetch<ParkingPostComment>(`/parking/posts/${postId}/comments/${encodeURIComponent(primaryUsername)}`, {
+      method: 'POST',
+      body: JSON.stringify({ content, parent_id: parent_id ?? null }),
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/invalid username/i.test(msg) && primaryUsername !== fallbackUsername) {
+      return apiFetch<ParkingPostComment>(`/parking/posts/${postId}/comments/${encodeURIComponent(fallbackUsername)}`, {
+        method: 'POST',
+        body: JSON.stringify({ content, parent_id: parent_id ?? null }),
+      });
+    }
+    throw e;
+  }
+}
+
+export async function updateParkingPostComment(commentId: number, username: string, content: string) {
+  return apiFetch<ParkingPostComment>(`/parking/comments/${commentId}/${encodeURIComponent(username)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function deleteParkingPostComment(commentId: number, username: string) {
+  return apiFetch<{ ok?: boolean }>(`/parking/comments/${commentId}/${encodeURIComponent(username)}`, {
+    method: 'DELETE',
+  });
 }
 

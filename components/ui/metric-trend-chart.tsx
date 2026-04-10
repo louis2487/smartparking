@@ -13,20 +13,23 @@ type Props = {
   points: TrendPoint[];
   color?: string;
   height?: number;
+  mode?: 'line' | 'bar';
 };
 
-export function MetricTrendChart({ points, color = '#2F6BFF', height = 220 }: Props) {
+export function MetricTrendChart({ points, color = '#2F6BFF', height = 220, mode = 'line' }: Props) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const width = 340;
   const innerPad = 18;
   const axisLeft = 36;
   const chartW = width - axisLeft - innerPad;
   const chartH = height - innerPad * 2;
+  const bottomY = height - innerPad;
 
   const prepared = useMemo(() => {
-    if (!points.length) return { path: '', circles: [], min: 0, max: 0, ticks: [] as Array<{ y: number; value: number }> };
+    if (!points.length)
+      return { path: '', circles: [], min: 0, max: 0, ticks: [] as Array<{ y: number; value: number }>, barWidth: 10 };
     const values = points.map((p) => Number(p.value || 0));
-    const min = Math.min(...values);
+    const min = mode === 'bar' ? Math.min(0, ...values) : Math.min(...values);
     const max = Math.max(...values);
     const range = Math.max(max - min, 1);
     const tickCount = 4;
@@ -43,8 +46,10 @@ export function MetricTrendChart({ points, color = '#2F6BFF', height = 220 }: Pr
       return { y, value };
     });
     const path = circles.map((c) => `${c.x},${c.y}`).join(' ');
-    return { path, circles, min, max, ticks };
-  }, [chartH, chartW, innerPad, points]);
+    const slotW = points.length === 0 ? chartW : chartW / points.length;
+    const barWidth = Math.max(6, Math.min(20, slotW * 0.7));
+    return { path, circles, min, max, ticks, barWidth };
+  }, [chartH, chartW, innerPad, mode, points]);
 
   const first = points[0]?.date ?? '-';
   const mid = points[Math.floor((points.length - 1) / 2)]?.date ?? '-';
@@ -88,17 +93,35 @@ export function MetricTrendChart({ points, color = '#2F6BFF', height = 220 }: Pr
             </SvgText>
           </React.Fragment>
         ))}
-        {prepared.path ? <Polyline points={prepared.path} fill="none" stroke={color} strokeWidth={3} /> : null}
-        {prepared.circles.map((c, idx) => (
-          <Circle
-            key={`c-${idx}`}
-            cx={c.x}
-            cy={c.y}
-            r={selectedIdx === idx ? 5 : 3.5}
-            fill={color}
-            onPress={() => setSelectedIdx((prev) => (prev === idx ? null : idx))}
-          />
-        ))}
+        {mode === 'line' && prepared.path ? <Polyline points={prepared.path} fill="none" stroke={color} strokeWidth={3} /> : null}
+        {mode === 'line'
+          ? prepared.circles.map((c, idx) => (
+              <Circle
+                key={`c-${idx}`}
+                cx={c.x}
+                cy={c.y}
+                r={selectedIdx === idx ? 5 : 3.5}
+                fill={color}
+                onPress={() => setSelectedIdx((prev) => (prev === idx ? null : idx))}
+              />
+            ))
+          : prepared.circles.map((c, idx) => {
+              const barX = c.x - prepared.barWidth / 2;
+              const barH = Math.max(1, bottomY - c.y);
+              return (
+                <Rect
+                  key={`b-${idx}`}
+                  x={barX}
+                  y={c.y}
+                  width={prepared.barWidth}
+                  height={barH}
+                  rx={2}
+                  fill={color}
+                  opacity={selectedIdx === idx ? 1 : 0.88}
+                  onPress={() => setSelectedIdx((prev) => (prev === idx ? null : idx))}
+                />
+              );
+            })}
         {selected ? (
           <>
             <Line

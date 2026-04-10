@@ -1,17 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
-import { MetricTrendChart } from '@/components/ui/metric-trend-chart';
 import { getParkingAdminCounts, type ParkingCountRow } from '@/lib/api';
 
 const AUTH_USER_KEY = 'smartparking:auth:username';
 const AUTH_PASS_KEY = 'smartparking:auth:password';
 
-export default function DailyCountGraphScreen() {
+export default function ParkingCountAdminScreen() {
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<ParkingCountRow[]>([]);
 
@@ -28,7 +27,7 @@ export default function DailyCountGraphScreen() {
       const list = await getParkingAdminCounts(username, password, 30);
       setRows(list);
     } catch (e) {
-      Alert.alert('오류', e instanceof Error ? e.message : '일일 가입자 그래프 데이터를 불러오지 못했습니다.');
+      Alert.alert('오류', e instanceof Error ? e.message : '집계 목록을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
     }
@@ -38,31 +37,23 @@ export default function DailyCountGraphScreen() {
     load();
   }, [load]);
 
-  const points = useMemo(
-    () =>
-      [...rows]
-        .reverse()
-        .map((r) => ({ date: r.count_date.slice(5), value: Number(r.daily_count || 0) })),
-    [rows],
-  );
-
-  const latest = rows[0]?.daily_count ?? 0;
-  const prev = rows[1]?.daily_count ?? 0;
-  const delta = latest - prev;
-
   return (
     <ThemedView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <ThemedText type="title">일일 가입자 그래프</ThemedText>
-        <ThemedText style={styles.sub}>날짜별 신규 가입자 수 추이</ThemedText>
+        <ThemedText type="title">현황 집계</ThemedText>
+        <ThemedText style={styles.sub}>Admin 전용 요약: 총 회원 / 오늘 가입</ThemedText>
         <Button title={loading ? '불러오는 중...' : '새로고침'} onPress={load} disabled={loading} />
 
-        <View style={styles.summary}>
-          <ThemedText>최신: {latest}</ThemedText>
-          <ThemedText>전일 대비: {delta >= 0 ? `+${delta}` : `${delta}`}</ThemedText>
+        <View style={styles.list}>
+          {rows.map((row) => (
+            <View key={row.count_date} style={styles.item}>
+              <ThemedText style={styles.date}>{row.count_date}</ThemedText>
+              <ThemedText>총 회원: {row.total_count}</ThemedText>
+              <ThemedText>오늘 가입: {row.daily_count}</ThemedText>
+            </View>
+          ))}
+          {!loading && rows.length === 0 ? <ThemedText style={styles.empty}>표시할 집계가 없습니다.</ThemedText> : null}
         </View>
-
-        <MetricTrendChart points={points} color="#dc2626" mode="bar" />
       </ScrollView>
     </ThemedView>
   );
@@ -72,13 +63,16 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   container: { padding: 18, gap: 10, paddingBottom: 30 },
   sub: { opacity: 0.75 },
-  summary: {
-    borderRadius: 12,
+  list: { gap: 10, marginTop: 4 },
+  item: {
+    borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(120,120,120,0.35)',
-    padding: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     backgroundColor: 'rgba(120,120,120,0.06)',
+    padding: 12,
+    gap: 4,
   },
+  date: { fontWeight: '800' },
+  empty: { opacity: 0.75 },
 });
+

@@ -13,6 +13,17 @@ type LineThrow = {
   to: 0 | 1;
 };
 
+function getInitialThrows(): LineThrow[] {
+  return [
+    { throw: 8, from: 0, to: 0 },
+    { throw: 8, from: 0, to: 0 },
+    { throw: 8, from: 0, to: 0 },
+    { throw: 8, from: 0, to: 0 },
+    { throw: 8, from: 0, to: 0 },
+    { throw: 8, from: 0, to: 0 },
+  ];
+}
+
 function rollThrows(): LineThrow[] {
   // 아래(첫 줄)부터 위(여섯째 줄)까지 6/7/8/9 난수로 뽑습니다.
   // 6: 0 -> 1, 7: 1 -> 1, 8: 0 -> 0, 9: 1 -> 0
@@ -81,7 +92,7 @@ function lineText(v: 0 | 1) {
 
 export default function IChingScreen() {
   const text = useThemeColor({}, 'text');
-  const [throws, setThrows] = useState<LineThrow[]>(() => rollThrows());
+  const [throws, setThrows] = useState<LineThrow[]>(() => getInitialThrows());
 
   const baseLines = useMemo(() => throws.map((t) => t.from) as (0 | 1)[], [throws]);
   const changedLines = useMemo(() => throws.map((t) => t.to) as (0 | 1)[], [throws]);
@@ -155,20 +166,11 @@ export default function IChingScreen() {
         </ThemedView>
 
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Button title="다시 뽑기" onPress={() => setThrows(rollThrows())} style={{ flex: 1 }} />
+          <Button title="뽑기" onPress={() => setThrows(rollThrows())} style={{ flex: 1 }} />
           <Button
             title="초기화"
             variant="secondary"
-            onPress={() =>
-              setThrows([
-                { throw: 8, from: 0, to: 0 },
-                { throw: 8, from: 0, to: 0 },
-                { throw: 8, from: 0, to: 0 },
-                { throw: 8, from: 0, to: 0 },
-                { throw: 8, from: 0, to: 0 },
-                { throw: 8, from: 0, to: 0 },
-              ])
-            }
+            onPress={() => setThrows(getInitialThrows())}
             style={{ flex: 1 }}
           />
         </View>

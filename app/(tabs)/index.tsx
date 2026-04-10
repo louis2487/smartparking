@@ -43,7 +43,7 @@ export default function HomeScreen() {
   const [pillarNumber, setPillarNumber] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isOwner, setIsOwner] = useState(false);
+  const [userGrade, setUserGrade] = useState<'normal' | 'owner' | 'admin'>('normal');
   const [pillarModalOpen, setPillarModalOpen] = useState(false);
   const [pillarInput, setPillarInput] = useState('');
   const [pillarSaving, setPillarSaving] = useState(false);
@@ -111,11 +111,11 @@ export default function HomeScreen() {
     (async () => {
       try {
         const me = await getMe(username, password);
-        setIsOwner(me.grade === 'owner');
+        setUserGrade((me.grade as 'normal' | 'owner' | 'admin') || 'normal');
         const pn = (me.pillar_number || '').trim();
         setPillarNumber(pn ? pn : null);
       } catch {
-        setIsOwner(false);
+        setUserGrade('normal');
       }
     })();
   }, [username, password]);
@@ -194,7 +194,8 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.topRight}>
-        <Button title="방문차량 주차정산" variant="secondary" onPress={openSettle} style={styles.topRightBtn} />
+        <Button title="공지사항" variant="secondary" onPress={() => router.push('/list' as any)} style={styles.topRightBtn} />
+        <Button title="주차정산" variant="secondary" onPress={openSettle} style={styles.topRightBtn} />
       </View>
 
       <ThemedText type="title">내 차 위치</ThemedText>
@@ -250,15 +251,40 @@ export default function HomeScreen() {
         </ThemedText>
       ) : null}
 
-      {isOwner ? (
-        <View style={styles.ownerButtonsRow}>
+      {userGrade === 'owner' ? (
+        <View style={styles.ownerButtonsWrap}>
+          <View style={styles.ownerButtonsRow}>
+            <Button
+              title="관리자 설정"
+              variant="secondary"
+              onPress={() => router.push('/admin' as any)}
+              style={styles.ownerButton}
+            />
+            <Button title="주역 점" variant="secondary" onPress={() => router.push('/iching' as any)} style={styles.ownerButton} />
+          </View>
           <Button
-            title="관리자 설정"
+            title="조홍래 지원자 백엔드 과제"
             variant="secondary"
-            onPress={() => router.push('/admin' as any)}
+            onPress={() => router.push('/jhr/jhr_list' as any)}
+            style={styles.ownerButtonFull}
+          />
+        </View>
+      ) : null}
+
+      {userGrade === 'admin' ? (
+        <View style={styles.adminButtonsRow}>
+          <Button
+            title="총 회원수"
+            variant="secondary"
+            onPress={() => router.push('/total_count_grape' as any)}
             style={styles.ownerButton}
           />
-          <Button title="주역 점" variant="secondary" onPress={() => router.push('/iching' as any)} style={styles.ownerButton} />
+          <Button
+            title="오늘 가입자 수"
+            variant="secondary"
+            onPress={() => router.push('/daily_count' as any)}
+            style={styles.ownerButton}
+          />
         </View>
       ) : null}
 
@@ -328,6 +354,8 @@ const styles = StyleSheet.create({
     top: 24,
     right: 14,
     zIndex: 10,
+    flexDirection: 'row',
+    gap: 8,
   },
   topRightBtn: {
     height: 38,
@@ -373,13 +401,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  ownerButtonsWrap: {
+    marginTop: 12,
+    gap: 10,
+  },
   ownerButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  adminButtonsRow: {
     marginTop: 12,
     flexDirection: 'row',
     gap: 10,
   },
   ownerButton: {
     flex: 1,
+  },
+  ownerButtonFull: {
+    width: '100%',
   },
   currentFloorText: {
     marginTop: 4,

@@ -4,8 +4,8 @@ import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MetricTrendChart } from '@/components/ui/metric-trend-chart';
 import { Button } from '@/components/ui/button';
+import { MetricTrendChart } from '@/components/ui/metric-trend-chart';
 import { getParkingAdminCounts, type ParkingCountRow } from '@/lib/api';
 
 const AUTH_USER_KEY = 'smartparking:auth:username';
