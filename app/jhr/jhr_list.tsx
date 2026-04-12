@@ -106,7 +106,7 @@ export default function JhrListScreen() {
               { value: 'ALL', label: '모두' },
               { value: 'DRAFT', label: '초안' },
               { value: 'OPEN', label: '모집 중' },
-              { value: 'CLOSED', label: '모집 마감' },
+              { value: 'CLOSED', label: '마감' },
             ] as const
           ).map((s) => (
             <Pressable

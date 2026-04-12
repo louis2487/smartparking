@@ -23,6 +23,13 @@ import {
 
 const AUTH_USER_KEY = 'smartparking:auth:username';
 const AUTH_PASS_KEY = 'smartparking:auth:password';
+const KST_TIME_ZONE = 'Asia/Seoul';
+const kstYmdFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: KST_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
 
 function fmtDate(raw?: string | null) {
   if (!raw) return '-';
@@ -62,15 +69,25 @@ export default function JhrIdPostCard({ classId }: { classId: number }) {
   const [error, setError] = useState<string | null>(null);
   const [cancelDeadlineText, setCancelDeadlineText] = useState<string | null>(null);
 
+  const getKstDateParts = (d: Date) => {
+    const parts = kstYmdFormatter.formatToParts(d);
+    const y = Number(parts.find((p) => p.type === 'year')?.value);
+    const m = Number(parts.find((p) => p.type === 'month')?.value);
+    const day = Number(parts.find((p) => p.type === 'day')?.value);
+    if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(day)) return null;
+    return { y, m, day };
+  };
+
   const formatCancelDeadline = (raw: string | null | undefined) => {
     if (!raw) return null;
     const base = new Date(raw);
     if (Number.isNaN(base.getTime())) return null;
-    const deadline = new Date(base);
-    deadline.setDate(deadline.getDate() + 7);
-    const yy = String(deadline.getFullYear()).slice(-2);
-    const mm = String(deadline.getMonth() + 1).padStart(2, '0');
-    const dd = String(deadline.getDate()).padStart(2, '0');
+    const kstBase = getKstDateParts(base);
+    if (!kstBase) return null;
+    const deadline = new Date(Date.UTC(kstBase.y, kstBase.m - 1, kstBase.day + 7));
+    const yy = String(deadline.getUTCFullYear()).slice(-2);
+    const mm = String(deadline.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(deadline.getUTCDate()).padStart(2, '0');
     return `${yy}.${mm}.${dd}`;
   };
 

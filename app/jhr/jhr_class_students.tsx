@@ -55,7 +55,7 @@ export default function JhrClassStudentsScreen() {
         return;
       }
       const rows = await getJhrClassStudents(classId, username, password);
-      setItems(rows ?? []);
+      setItems((rows ?? []).filter((x) => x.status !== 'CANCELLED'));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
