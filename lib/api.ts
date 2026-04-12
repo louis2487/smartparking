@@ -195,10 +195,8 @@ export type JhrRoleOut = {
 };
 
 export async function getJhrRole(username: string, password: string) {
-  return apiFetch<JhrRoleOut>('/jhr/role', {
-    method: 'POST',
-    body: JSON.stringify({ username, password }),
-  });
+  const qs = new URLSearchParams({ username, password });
+  return apiFetch<JhrRoleOut>(`/jhr/role?${qs.toString()}`);
 }
 
 export async function setJhrRole(username: string, password: string, role: JhrRole) {
